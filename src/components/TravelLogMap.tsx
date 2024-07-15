@@ -3,8 +3,6 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
-import type { TravelLogEntryWithId } from '@/models/TravelLog/TravelLog';
 import { useCallback, useContext, useLayoutEffect } from 'react';
 import TravelLogContext from '@/TravelLogContext';
 import {
@@ -12,6 +10,7 @@ import {
   TravelLogDispatch,
 } from '@/types/TravelLogProviderTypes';
 import clientConfig from '@/lib/clientConfig';
+import type { TravelLogEntryWithId } from '@/models/TravelLog/TravelLog';
 
 const createIcon = (fill = '#56BC58', iconSize = 32) => {
   return L.divIcon({
@@ -45,17 +44,21 @@ const InitMap = ({ logs, onMapClick, dispatch }: InitMapProps) => {
         data: map,
       });
       map.invalidateSize();
+      const usBounds = new L.LatLngBounds(
+        [24.396308, -125.0], // Southwest coordinates
+        [49.384358, -66.93457] // Northeast coordinates
+      );
       if (logs.length) {
         const bounds = new L.LatLngBounds(
           logs.map((log) => [log.latitude, log.longitude])
         );
         map.fitBounds(bounds);
       } else {
-        map.setZoom(3);
-        map.setView([34.85480922648911, -41.89881501280613]);
+        map.setView([37.8, -96.9], 4); // Center and zoom level for the whole USA
       }
+      map.setMaxBounds(usBounds); // Restrict map panning to the US
+      map.setMinZoom(4); // Prevent zooming out too far
       map.on('click', onMapClick);
-      // TODO: less hacky way...
     }, 200);
   }, [map, logs, onMapClick, dispatch]);
   return null;
@@ -85,6 +88,15 @@ export default function TravelLogMap({ logs }: TravelLogMapProps) {
       worldCopyJump={true}
       className="w-full h-full"
       style={{ background: '#242525' }}
+      center={[37.8, -96.9]} // Center of the US
+      zoom={4}
+      maxBounds={[
+        [24.396308, -125.0], // Southwest coordinates
+        [49.384358, -66.93457] // Northeast coordinates
+      ]}
+      minZoom={4}
+      maxBoundsViscosity={1.0}
+      zoomControl={true}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
